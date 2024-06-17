@@ -1,0 +1,25 @@
+- name: Prepare all nodes
+  hosts: all
+  become: true
+  vars_files:
+    - vars.yml
+  roles:
+    - dependencies
+
+- name: Setup Kubernetes master node
+  hosts: "{{ master_node }}"
+  become: true
+  roles:
+    - kubernetes-master-setup
+
+- name: Get Kubernetes join token
+  hosts: "{{ master_node }}"
+  become: true
+  roles:
+    - kubernetes-get-token
+
+- name: Setup Kubernetes worker nodes
+  hosts: "{{ worker_nodes }}"
+  become: true
+  roles:
+    - kubernetes-worker-setup

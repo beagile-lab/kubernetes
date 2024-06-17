@@ -1,0 +1,37 @@
+---
+- name: Create an empty file for Kubeadm configuring
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    force: false
+    mode: '0644'
+
+- name: Initialize the cluster (this could take some time)
+  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+  args:
+    chdir: /home/ubuntu
+    creates: cluster_initialized.log
+
+- name: Create .kube directory
+  become: true
+  become_user: ubuntu
+  ansible.builtin.file:
+    path: $HOME/.kube
+    state: directory
+    mode: '0755'
+
+- name: Copy admin.conf to user's kube config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: true
+    owner: ubuntu
+    mode: '0644'
+
+- name: Install Pod network
+  become: true
+  become_user: ubuntu
+  ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+  args:
+    chdir: $HOME
+    creates: pod_network_setup.log

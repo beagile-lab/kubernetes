@@ -1,0 +1,5 @@
+k8s_version: "1.28"
+master_node: k8s-master-1
+worker_nodes:
+  - k8s-worker-1
+  - k8s-worker-2

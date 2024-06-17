@@ -1,0 +1,12 @@
+---
+- name: TCP port 6443 on master is reachable from worker
+  ansible.builtin.wait_for:
+    host: "{{ hostvars['k8s-master-1']['ansible_default_ipv4']['address'] }}"
+    port: 6443
+    timeout: 1
+
+- name: Join cluster
+  ansible.builtin.command: "{{ hostvars['k8s-master-1'].join_command }} >> node_joined.log"
+  args:
+    chdir: /home/ubuntu
+    creates: node_joined.log

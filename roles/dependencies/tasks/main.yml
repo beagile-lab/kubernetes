@@ -89,32 +89,23 @@
     state: restarted
     enabled: true
 
-- name: Add Kubernetes apt-key
-  ansible.builtin.get_url:
-    url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-    dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    mode: '0644'
-    force: true
+- name: Add Kubernetes GPG key
+  shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
+  args:
+    creates: "{{ k8s_gpgpath }}"
 
-- name: Add Kubernetes' APT repository
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
-    state: present
-    filename: 'kubernetes'
-    update_cache: true
+- name: Add Kubernetes APT repository
+  apt_repository:
+    filename: kubernetes
+    repo: "deb [signed-by={{ k8s_gpgpath }}] {{ k8s_repository }} /"
 
 - name: Update apt package index
   ansible.builtin.apt:
     update_cache: true
 
-- name: Install Kubernetes packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - kubelet={{ k8s_version }}
-    - kubeadm={{ k8s_version }}
-    - kubectl={{ k8s_version }}
+- name: Install Kubernetes Packages
+  package: name={{ item }} state=present force=yes install_recommends=no
+  loop: "{{ k8s_packages }}"
 
 - name: Enable and start Kubelet
   ansible.builtin.systemd:

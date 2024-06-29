@@ -9,17 +9,23 @@
 - name: Setup Kubernetes master node
   hosts: "{{ master_node }}"
   become: true
+  vars_files:
+    - vars.yml
   roles:
     - kubernetes-master-setup
 
 - name: Get Kubernetes join token
   hosts: "{{ master_node }}"
   become: true
+  vars_files:
+    - vars.yml
   roles:
     - kubernetes-get-token
 
 - name: Setup Kubernetes worker nodes
   hosts: "{{ worker_nodes }}"
   become: true
+  vars_files:
+    - vars.yml
   roles:
     - kubernetes-worker-setup

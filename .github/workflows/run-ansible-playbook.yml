@@ -1,0 +1,29 @@
+name: Create Kubernetes Cluster on Hetzner
+on: [push]
+  
+jobs:
+  create-cluster:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Ansible
+      run: |
+        python -m pip install --upgrade pip
+        python3 -m pip install --user ansible
+        python3 -m pip install --user ansible-core
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
+    
+    - name: Run Ansible Playbook
+      run: ansible-playbook -i inventory/hosts.yml site.yml

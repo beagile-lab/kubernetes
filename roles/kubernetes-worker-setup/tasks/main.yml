@@ -4,9 +4,13 @@
     host: "{{ hostvars['k8s-master-1']['ansible_default_ipv4']['address'] }}"
     port: 6443
     timeout: 1
-
+- name: Create the directory if it does not exist
+  ansible.builtin.file:
+    path: /home/ubuntu
+    state: directory
+    mode: '0755'
 - name: Join cluster
   ansible.builtin.command: "{{ hostvars['k8s-master-1'].join_command }} >> node_joined.log"
   args:
-    chdir: /home/runner
+    chdir: /home/ubuntu
     creates: node_joined.log

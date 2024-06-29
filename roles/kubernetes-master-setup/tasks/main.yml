@@ -5,11 +5,16 @@
     dest: /etc/kubernetes/kubeadm-config.yaml
     force: false
     mode: '0644'
+- name: Create the directory if it does not exist
+  ansible.builtin.file:
+    path: /home/ubuntu
+    state: directory
+    mode: '0755'
 
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
   args:
-    chdir: /home/runner
+    chdir: /home/ubuntu
     creates: cluster_initialized.log
 
 - name: Create .kube directory
@@ -23,7 +28,7 @@
 - name: Copy admin.conf to user's kube config
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: /home/runner/.kube/config
+    dest: /home/ubuntu/.kube/config
     remote_src: true
     owner: ubuntu
     mode: '0644'

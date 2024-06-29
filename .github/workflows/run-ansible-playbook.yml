@@ -1,10 +1,10 @@
-name: Create Kubernetes Cluster on Hetzner
+name: Deploy Kubernetes Cluster
 on: [push]
-  
+
 jobs:
-  create-cluster:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
@@ -19,6 +19,17 @@ jobs:
         python -m pip install --upgrade pip
         python3 -m pip install --user ansible
         python3 -m pip install --user ansible-core
-        
+    
+    - name: Split Secondary Masters
+      id: split
+      run: |
+        echo "SECONDARY_MASTER_1=$(echo ${{ secrets.SECONDARY_MASTERS }} | cut -d',' -f1)" >> $GITHUB_ENV
+        echo "SECONDARY_MASTER_2=$(echo ${{ secrets.SECONDARY_MASTERS }} | cut -d',' -f2)" >> $GITHUB_ENV
+
     - name: Run Ansible Playbook
-      run: ansible-playbook -i inventory/hosts.yml site.yml
+      run: |
+        ansible-playbook -i inventory/hosts.yml site.yml --extra-vars "
+          ansible_ssh_private_key_file=${{ secrets.HETZNER_SSH_PRIVATE_KEY }} 
+          k8s_master_1_host=${{ secrets.MASTER }} 
+          k8s_master_2_host=${{ env.SECONDARY_MASTER_1 }} 
+          k8s_master_3_host=${{ env.SECONDARY_MASTER_2 }}"

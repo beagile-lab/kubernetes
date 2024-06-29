@@ -12,7 +12,7 @@
     mode: '0755'
 
 - name: Initialize the cluster (this could take some time)
-  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+  ansible.builtin.command: /bin/bash -c "kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log"
   args:
     chdir: /home/ubuntu
     creates: cluster_initialized.log

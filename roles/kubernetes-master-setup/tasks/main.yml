@@ -4,10 +4,7 @@
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
 - name: Kill all Kubernetes related processes
   ansible.builtin.shell: |
-    fuser -k 6443/tcp || true
     fuser -k 10250/tcp || true
-    fuser -k 2379/tcp || true
-    fuser -k 2380/tcp || true
     fuser -k 10251/tcp || true
     fuser -k 10252/tcp || true
     fuser -k 10255/tcp || true

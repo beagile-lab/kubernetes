@@ -2,15 +2,22 @@
 - name: Define variables
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
-- name: Kill all Kubernetes related processes
-  ansible.builtin.shell: |
-    fuser -k 10250/tcp || true
-    fuser -k 10251/tcp || true
-    fuser -k 10252/tcp || true
-    fuser -k 10255/tcp || true
-  become: true
-  ignore_errors: yes
 
+- name: Remove existing Kubernetes manifest files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/kubernetes/manifests/kube-apiserver.yaml
+    - /etc/kubernetes/manifests/kube-controller-manager.yaml
+    - /etc/kubernetes/manifests/kube-scheduler.yaml
+    - /etc/kubernetes/manifests/etcd.yaml
+  become: true
+
+- name: Free up ports 10257 and 10259
+  ansible.builtin.command: "fuser -k 10257/tcp 10259/tcp"
+  ignore_errors: true
+  become: true
 
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:

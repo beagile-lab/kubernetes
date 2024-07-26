@@ -2,12 +2,11 @@ master_node: k8s-master-1
 worker_nodes:
   - k8s-worker-1
   - k8s-worker-2
-k8s_url_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key"
+k8s_url_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key"
 k8s_gpgpath: /usr/share/keyrings/kubernetes-apt-keyring.gpg
-k8s_repository: "https://pkgs.k8s.io/core:/stable:/v1.28/deb/"
+k8s_repository: "https://pkgs.k8s.io/core:/stable:/v1.29/deb/"
 k8s_packages:
   - kubernetes-cni
   - kubelet
   - kubeadm
-kubernetes_version: "1.28.0-00"
-kubeadm_version: "v1.28.0"
+kubeadm_version: "v1.29.0"

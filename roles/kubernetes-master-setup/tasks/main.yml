@@ -55,5 +55,5 @@
   args:
     chdir: /home
     creates: pod_network_setup.log
-  mode: '0644'
+
 

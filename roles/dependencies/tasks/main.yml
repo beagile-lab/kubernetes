@@ -104,7 +104,7 @@
     update_cache: true
 
 - name: Install Kubernetes Packages
-  package: name={{ item }} state=present force=yes install_recommends=no
+  package: name="{{ item }}={{ kubernetes_version }}" state=present force=yes install_recommends=no
   loop: "{{ k8s_packages }}"
 
 - name: Enable and start Kubelet

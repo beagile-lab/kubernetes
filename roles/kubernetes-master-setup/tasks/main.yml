@@ -2,6 +2,11 @@
 - name: Define variables
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
+- name: Stop any service using port 10250
+  ansible.builtin.shell: |
+    fuser -k 10250/tcp || true
+  become: true
+  ignore_errors: yes
 
 
 - name: Create Kubeadm configuration file
@@ -15,7 +20,7 @@
       ---
       apiVersion: kubeadm.k8s.io/v1beta3
       kind: ClusterConfiguration
-      kubernetesVersion: "v1.28.0"
+      kubernetesVersion: "{{kubeadm_version}}"
       controlPlaneEndpoint: "{{ master_node_ip }}:6443"
       networking:
         podSubnet: "10.244.0.0/16"

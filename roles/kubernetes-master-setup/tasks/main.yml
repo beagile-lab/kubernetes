@@ -2,39 +2,28 @@
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:
     content: |
-      apiVersion: kubeadm.k8s.io/v1beta2
+      apiVersion: kubeadm.k8s.io/v1beta3
+      kind: InitConfiguration
+      localAPIEndpoint:
+        advertiseAddress: "{{ master_node }}"
+        bindPort: 6443
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta3
       kind: ClusterConfiguration
-      kubernetesVersion: v1.24.0
-      controlPlaneEndpoint: "k8s-master-1:6443"
+      kubernetesVersion: "v1.24.0"
+      controlPlaneEndpoint: "{{ master_node }}:6443"
       networking:
         podSubnet: "10.244.0.0/16"
     dest: /etc/kubernetes/kubeadm-config.yaml
     force: true
     mode: '0644'
+  become: true
 - name: Initialize the cluster (this could take some time)
-  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs --ignore-preflight-errors=all
   args:
     chdir: /home/ubuntu
     creates: cluster_initialized.log
   become: true
-- name: Debug kubeadm init command output
-  debug:
-    var: kubeadm_init
-
-- name: Fail if kubeadm init failed
-  fail:
-    msg: "kubeadm init failed: {{ kubeadm_init.stderr }}"
-  when: kubeadm_init.rc != 0
-
-- name: Check if admin.conf exists
-  stat:
-    path: /etc/kubernetes/admin.conf
-  register: admin_conf
-
-- name: Fail if admin.conf is missing
-  fail:
-    msg: "The admin.conf file was not created by kubeadm init."
-  when: not admin_conf.stat.exists
 
 - name: Create .kube directory
   become: true

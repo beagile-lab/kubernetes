@@ -17,6 +17,24 @@
     chdir: /home/ubuntu
     creates: cluster_initialized.log
   become: true
+- name: Debug kubeadm init command output
+  debug:
+    var: kubeadm_init
+
+- name: Fail if kubeadm init failed
+  fail:
+    msg: "kubeadm init failed: {{ kubeadm_init.stderr }}"
+  when: kubeadm_init.rc != 0
+
+- name: Check if admin.conf exists
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: admin_conf
+
+- name: Fail if admin.conf is missing
+  fail:
+    msg: "The admin.conf file was not created by kubeadm init."
+  when: not admin_conf.stat.exists
 
 - name: Create .kube directory
   become: true

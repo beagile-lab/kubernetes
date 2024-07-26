@@ -11,12 +11,6 @@
     dest: /etc/kubernetes/kubeadm-config.yaml
     force: true
     mode: '0644'
-- name: Create an empty file for Kubeadm configuring
-  ansible.builtin.copy:
-    content: ""
-    dest: /etc/kubernetes/kubeadm-config.yaml
-    force: false
-    mode: '0644'
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
   args:
@@ -25,20 +19,22 @@
 
 - name: Create .kube directory
   become: true
-  become_user: ubuntu
   ansible.builtin.file:
-    path: $HOME/.kube
+    path: /home/ubuntu/.kube
     state: directory
     mode: '0755'
+    owner: ubuntu
+    group: ubuntu
 
 - name: Copy admin.conf to user's kube config
+  become: true
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
     dest: /home/ubuntu/.kube/config
     remote_src: true
     owner: ubuntu
+    group: ubuntu
     mode: '0644'
-
 - name: Install Pod network
   become: true
   become_user: ubuntu

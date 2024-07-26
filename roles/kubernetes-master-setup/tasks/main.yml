@@ -54,6 +54,7 @@
   become_user: ubuntu
   ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
   args:
-    chdir: $HOME
+    chdir: /home
     creates: pod_network_setup.log
+  mode: '0644'
 

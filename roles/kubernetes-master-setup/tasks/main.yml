@@ -51,7 +51,6 @@
 
 - name: Install Pod network
   become: true
-  become_user: ubuntu
   ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
   args:
     chdir: /home

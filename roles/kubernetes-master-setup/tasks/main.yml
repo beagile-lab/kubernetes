@@ -1,4 +1,16 @@
 ---
+- name: Create Kubeadm configuration file
+  ansible.builtin.copy:
+    content: |
+      apiVersion: kubeadm.k8s.io/v1beta2
+      kind: ClusterConfiguration
+      kubernetesVersion: v1.24.0
+      controlPlaneEndpoint: "k8s-master-1:6443"
+      networking:
+        podSubnet: "10.244.0.0/16"
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    force: true
+    mode: '0644'
 - name: Create an empty file for Kubeadm configuring
   ansible.builtin.copy:
     content: ""

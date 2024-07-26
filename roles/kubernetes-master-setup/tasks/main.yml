@@ -3,17 +3,6 @@
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
 
-- name: Remove existing Kubernetes manifest files
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  with_items:
-    - /etc/kubernetes/manifests/kube-apiserver.yaml
-    - /etc/kubernetes/manifests/kube-controller-manager.yaml
-    - /etc/kubernetes/manifests/kube-scheduler.yaml
-    - /etc/kubernetes/manifests/etcd.yaml
-  become: true
-
 - name: Free up ports 10257 and 10259
   ansible.builtin.command: "fuser -k 10257/tcp 10259/tcp"
   ignore_errors: true

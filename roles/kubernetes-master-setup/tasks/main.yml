@@ -57,9 +57,6 @@
     path: /home/ubuntu/.kube
     state: directory
     mode: '0755'
-    owner: ubuntu
-    group: ubuntu
-
 - name: Copy admin.conf to user's kube config
   become: true
   ansible.builtin.copy:
@@ -67,8 +64,6 @@
     dest: /home/ubuntu/.kube/config
     remote_src: true
     mode: '0644'
-    owner: ubuntu
-    group: ubuntu
 
 - name: Install Pod network
   become: true

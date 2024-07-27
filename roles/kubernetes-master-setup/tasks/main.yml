@@ -3,7 +3,29 @@
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}"
 
+- name: Reset the Kubernetes setup if any
+  ansible.builtin.command: kubeadm reset -f
+  ignore_errors: yes
+  become: true
 
+- name: Remove existing Kubernetes configuration and data
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/kubernetes/
+    - /var/lib/etcd
+  become: true
+
+- name: Ensure required sysctl settings
+  ansible.builtin.command: >
+    sysctl net.bridge.bridge-nf-call-iptables=1
+  become: true
+
+- name: Pull required Kubernetes images
+  ansible.builtin.command: kubeadm config images pull
+  become: true
+  
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: >
     kubeadm init

@@ -3,42 +3,15 @@
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}"
 
-- name: Reset the Kubernetes setup if any
-  ansible.builtin.command: kubeadm reset -f
-  ignore_errors: yes
-  become: true
-
-# - name: Remove existing Kubernetes configuration and data
-#   ansible.builtin.file:
-#     path: "{{ item }}"
-#     state: absent
-#   loop:
-#     - /etc/kubernetes/
-#     - /var/lib/etcd
-#   become: true
-
-- name: Create Kubeadm configuration file
-  ansible.builtin.copy:
-    content: |
-      apiVersion: kubeadm.k8s.io/v1beta3
-      kind: InitConfiguration
-      localAPIEndpoint:
-        advertiseAddress: "{{ master_node_ip }}"
-        bindPort: 6443
-      ---
-      apiVersion: kubeadm.k8s.io/v1beta3
-      kind: ClusterConfiguration
-      kubernetesVersion: "{{ kubeadm_version }}"
-      controlPlaneEndpoint: "{{ master_node_ip }}:6443"
-      networking:
-        podSubnet: "10.244.0.0/16"
-    dest: /etc/kubernetes/kubeadm-config.yaml
-    force: true
-    mode: '0644'
-  become: true
 
 - name: Initialize the cluster (this could take some time)
-  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs --ignore-preflight-errors=all
+  ansible.builtin.command: >
+    kubeadm init
+    --apiserver-advertise-address={{ master_node_ip }}
+    --control-plane-endpoint={{ master_node_ip }}:6443
+    --pod-network-cidr=10.244.0.0/16
+    --upload-certs
+    --ignore-preflight-errors=all
   args:
     creates: cluster_initialized.log
   become: true

@@ -43,6 +43,7 @@
   ansible.builtin.file:
     path: /etc/kubernetes/pki
     state: absent
+    recurse: yes
   become: true
 
 - name: Remove existing Kubernetes config files

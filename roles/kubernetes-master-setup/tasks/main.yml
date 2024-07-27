@@ -8,14 +8,14 @@
   ignore_errors: yes
   become: true
 
-- name: Remove existing Kubernetes configuration and data
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /etc/kubernetes/
-    - /var/lib/etcd
-  become: true
+# - name: Remove existing Kubernetes configuration and data
+#   ansible.builtin.file:
+#     path: "{{ item }}"
+#     state: absent
+#   loop:
+#     - /etc/kubernetes/
+#     - /var/lib/etcd
+#   become: true
 
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:

@@ -1,7 +1,13 @@
 ---
 - name: Define variables
-  ansible.builtin.set_fact:
+  set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
+- name: Stop any service using port 10250
+  ansible.builtin.shell: |
+    fuser -k 10250/tcp || true
+  become: true
+  ignore_errors: yes
+
 
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:
@@ -14,7 +20,7 @@
       ---
       apiVersion: kubeadm.k8s.io/v1beta3
       kind: ClusterConfiguration
-      kubernetesVersion: "{{ kubeadm_version }}"
+      kubernetesVersion: "{{kubeadm_version}}"
       controlPlaneEndpoint: "{{ master_node_ip }}:6443"
       networking:
         podSubnet: "10.244.0.0/16"
@@ -22,11 +28,6 @@
     force: true
     mode: '0644'
   become: true
-
-- name: Reset Kubeadm
-  ansible.builtin.command: kubeadm reset -f
-  become: true
-
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs --ignore-preflight-errors=all
   args:
@@ -39,6 +40,7 @@
     path: /home/ubuntu/.kube
     state: directory
     mode: '0755'
+ 
 - name: Copy admin.conf to user's kube config
   become: true
   ansible.builtin.copy:
@@ -53,5 +55,4 @@
   args:
     chdir: /home
     creates: pod_network_setup.log
-  environment:
-    KUBECONFIG: /home/ubuntu/.kube/config
+  mode: '0644'

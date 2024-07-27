@@ -3,10 +3,7 @@
   set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
 
-- name: Free up ports 10257 and 10259
-  ansible.builtin.command: "fuser -k 10257/tcp 10259/tcp"
-  ignore_errors: true
-  become: true
+
 
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:

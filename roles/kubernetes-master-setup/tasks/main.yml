@@ -48,11 +48,13 @@
     dest: /home/ubuntu/.kube/config
     remote_src: true
     mode: '0644'
-
+    
 - name: Install Pod network
   become: true
-  ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+  ansible.builtin.command:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
   args:
     chdir: /home
-    creates: pod_network_setup.log
-  mode: '0644'
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  register: pod_network_setup_log

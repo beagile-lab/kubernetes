@@ -27,32 +27,6 @@
   ansible.builtin.command: kubeadm reset -f
   become: true
 
-- name: Clean up CNI directories
-  ansible.builtin.file:
-    path: /etc/cni/net.d
-    state: absent
-  become: true
-
-- name: Clean up etcd directories
-  ansible.builtin.file:
-    path: /var/lib/etcd
-    state: absent
-  become: true
-
-- name: Clean up Kubernetes PKI directories
-  ansible.builtin.file:
-    path: /etc/kubernetes/pki
-    state: absent
-    recurse: yes
-  become: true
-
-- name: Remove existing Kubernetes config files
-  ansible.builtin.file:
-    path: /etc/kubernetes/admin.conf
-    state: absent
-  become: true
-
-
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs --ignore-preflight-errors=all
   args:

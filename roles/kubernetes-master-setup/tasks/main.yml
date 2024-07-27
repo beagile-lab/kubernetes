@@ -1,9 +1,7 @@
 ---
 - name: Define variables
-  set_fact:
+  ansible.builtin.set_fact:
     master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}" 
-
-
 
 - name: Create Kubeadm configuration file
   ansible.builtin.copy:
@@ -16,7 +14,7 @@
       ---
       apiVersion: kubeadm.k8s.io/v1beta3
       kind: ClusterConfiguration
-      kubernetesVersion: "{{kubeadm_version}}"
+      kubernetesVersion: "{{ kubeadm_version }}"
       controlPlaneEndpoint: "{{ master_node_ip }}:6443"
       networking:
         podSubnet: "10.244.0.0/16"
@@ -26,8 +24,27 @@
   become: true
 
 - name: Reset Kubeadm
-  ansible.builtin.command: kubeadm reset
+  ansible.builtin.command: kubeadm reset -f
   become: true
+
+- name: Clean up CNI directories
+  ansible.builtin.file:
+    path: /etc/cni/net.d
+    state: absent
+    become: true
+
+- name: Clean up etcd directories
+  ansible.builtin.file:
+    path: /var/lib/etcd
+    state: absent
+    become: true
+
+- name: Clean up Kubernetes PKI directories
+  ansible.builtin.file:
+    path: /etc/kubernetes/pki
+    state: absent
+    become: true
+
 - name: Initialize the cluster (this could take some time)
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs --ignore-preflight-errors=all
   args:
@@ -40,7 +57,9 @@
     path: /home/ubuntu/.kube
     state: directory
     mode: '0755'
- 
+    owner: ubuntu
+    group: ubuntu
+
 - name: Copy admin.conf to user's kube config
   become: true
   ansible.builtin.copy:
@@ -48,6 +67,8 @@
     dest: /home/ubuntu/.kube/config
     remote_src: true
     mode: '0644'
+    owner: ubuntu
+    group: ubuntu
 
 - name: Install Pod network
   become: true
@@ -55,5 +76,5 @@
   args:
     chdir: /home
     creates: pod_network_setup.log
-
-
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config

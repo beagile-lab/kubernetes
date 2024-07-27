@@ -57,6 +57,11 @@
     cmd: sysctl --system
   changed_when: false
 
+- name: Load br_netfilter module
+  ansible.builtin.shell: modprobe br_netfilter
+  args:
+    executable: /bin/bash
+
 - name: Add Docker's apt-key
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
@@ -90,12 +95,12 @@
     enabled: true
 
 - name: Add Kubernetes GPG key
-  shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
+  ansible.builtin.shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
   args:
     creates: "{{ k8s_gpgpath }}"
 
 - name: Add Kubernetes APT repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     filename: kubernetes
     repo: "deb [signed-by={{ k8s_gpgpath }}] {{ k8s_repository }} /"
 
@@ -104,7 +109,11 @@
     update_cache: true
 
 - name: Install Kubernetes Packages
-  package: name={{ item }} state=present force=yes install_recommends=no
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+    force: yes
+    install_recommends: no
   loop: "{{ k8s_packages }}"
 
 - name: Enable and start Kubelet
@@ -112,3 +121,8 @@
     name: kubelet
     enabled: true
     state: started
+
+- name: Pull required pause image
+  ansible.builtin.command: crictl pull registry.k8s.io/pause:3.9
+  become: true
+  ignore_errors: true

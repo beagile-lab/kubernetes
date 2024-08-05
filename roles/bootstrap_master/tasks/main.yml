@@ -1,8 +1,4 @@
 ---
-- name: Define variables
-  ansible.builtin.set_fact:
-    master_node_ip: "{{ lookup('vars', 'k8s_master_1_host') }}"
-
 - name: Ensure /etc/kubernetes directory exists
   ansible.builtin.file:
     path: /etc/kubernetes
@@ -16,13 +12,13 @@
       apiVersion: kubeadm.k8s.io/v1beta3
       kind: InitConfiguration
       localAPIEndpoint:
-        advertiseAddress: "{{ master_node_ip }}"
+        advertiseAddress: "{{ k8s_master_1_host }}"
         bindPort: 6443
       ---
       apiVersion: kubeadm.k8s.io/v1beta3
       kind: ClusterConfiguration
       kubernetesVersion: "{{ kubeadm_version }}"
-      controlPlaneEndpoint: "{{ master_node_ip }}:6443"
+      controlPlaneEndpoint: "{{ k8s_master_1_host }}:6443"
       networking:
         podSubnet: "{{ pod_network_cidr }}"
       apiServer:
@@ -41,37 +37,3 @@
   become: true
   register: init_cluster
   changed_when: "'[init] Using Kubernetes version' in init_cluster.stdout"
-
-- name: Enable and start Kubelet
-  ansible.builtin.systemd:
-    name: kubelet
-    enabled: true
-    state: started
-
-- name: Ensure .kube directory exists
-  ansible.builtin.file:
-    path: /root/.kube
-    state: directory
-    mode: '0755'
-  become: true
-
-- name: Copy admin.conf to user's kube config
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: /root/.kube/config
-    remote_src: true
-    mode: '0644'
-  become: true
-  when: not ansible_builtin_stat.path.exists('/root/.kube/config')
-
-- name: Install Pod network
-  become: true
-  ansible.builtin.command:
-    cmd: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-  args:
-    chdir: /root
-  environment:
-    KUBECONFIG: /root/.kube/config
-  register: pod_network_setup_log
-  changed_when: "'configured' in pod_network_setup_log.stdout"
-  when: not ansible_builtin_stat(path='/etc/kubernetes/manifests/kube-flannel.yml').stat.exists

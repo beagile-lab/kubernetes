@@ -59,7 +59,7 @@ jobs:
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
       run: |
-        ansible-playbook --user root -i inventory/hosts.yaml cluster.yml --extra-vars '{
+        ansible-playbook --user root -i inventory/hosts.yml cluster.yml --extra-vars '{
           "ansible_ssh_private_key_file": "~/.ssh/hetzner",
           "k8s_master_1_host": "${{ steps.getHosts.outputs.bootstrap_master }}",
           "k8s_master_masters": "${{ steps.getHosts.outputs.masters }}"

@@ -3,11 +3,13 @@
   ansible.builtin.hostname:
     name: "{{ master_node }}"
   when: inventory_hostname == 'k8s-master-1'
+  changed_when: ansible_hostname != master_node
 
 - name: Set hostname for worker nodes
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
   when: inventory_hostname in worker_nodes
+  changed_when: ansible_hostname != inventory_hostname
 
 - name: Update /etc/hosts for master node
   ansible.builtin.lineinfile:
@@ -15,15 +17,11 @@
     regexp: "127.0.1.1.*"
     line: "127.0.1.1 {{ master_node }}"
   when: inventory_hostname == 'k8s-master-1'
+  state: present
 
 - name: Disable SWAP (Kubeadm requirement)
-  ansible.builtin.shell: |
-    set -o pipefail
-    if swapon --summary | grep -q 'partition'; then
-      swapoff -a
-    fi
-  args:
-    executable: /bin/bash
+  ansible.builtin.command: swapoff -a
+  when: ansible_swapon.stdout != ''
   changed_when: false
 
 - name: Disable SWAP in fstab (Kubeadm requirement)
@@ -31,6 +29,7 @@
     path: /etc/fstab
     regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
     replace: '# \1'
+  validate: 'grep -q "^[^#].*\sswap\s.*\s" /etc/fstab || true'
 
 - name: Ensure /etc/sysctl.d directory exists
   ansible.builtin.file:

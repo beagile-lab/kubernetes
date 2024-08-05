@@ -1,0 +1,65 @@
+name: Deploy Kubernetes Cluster
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    outputs:
+      primary_master: ${{ steps.getHosts.outputs.primary_master }}
+      secondary_masters: ${{ steps.getHosts.outputs.secondary_masters }}
+      
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Ansible
+      run: |
+        python3 -m pip install -r requirements.txt
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
+
+    - name: Split Hosts
+      id: getHosts
+      run: |
+        HOSTS="${{ secrets.HOSTS }}"
+        PRIMARY_MASTER=$(echo $HOSTS | cut -d';' -f1)
+        SECONDARY_MASTERS=$(echo $HOSTS | cut -d';' -f2-)
+
+        echo "::set-output name=primary_master::$PRIMARY_MASTER"
+        echo "::set-output name=secondary_masters::$SECONDARY_MASTERS"
+    - name: Create .ssh directory
+      run: mkdir -p ~/.ssh
+        
+    - name: Add SSH known_hosts
+      run: |
+        ssh-keyscan -H ${{ steps.getHosts.outputs.primary_master }} >> ~/.ssh/known_hosts
+        IFS=';' read -r -a array <<< "${{ steps.getHosts.outputs.secondary_masters }}"
+        for element in "${array[@]}"
+        do
+            ssh-keyscan -H $element >> ~/.ssh/known_hosts
+        done
+
+
+    - name: Write SSH private key to file
+      run: |
+        echo "${{ secrets.HETZNER_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/hetzner
+        chmod 600 ~/.ssh/hetzner
+
+    - name: Run Ansible Playbook
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+        PRIMARY_MASTER: ${{ steps.getHosts.outputs.primary_master }}
+        SECONDARY_MASTERS: ${{ steps.getHosts.outputs.secondary_masters }}
+      run: |
+        ansible-playbook --user root -i inventory/hosts.yml cluster.yml --extra-vars "
+          ansible_ssh_private_key_file=~/.ssh/hetzner
+          k8s_master_1_host=${PRIMARY_MASTER}"

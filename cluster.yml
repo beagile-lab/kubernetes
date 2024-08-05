@@ -1,0 +1,51 @@
+- name: Prepare all nodes
+  hosts: all
+  become: true
+  vars_files:
+    - vars.yml
+  roles:
+    - dependencies
+
+- name:  ⁠Bootstrap kubernetes cluster
+  hosts: "{{ hosts[0] }}"
+  become: true
+  vars_files:
+    - vars.yml
+  roles:
+<<<<<<< Updated upstream
+    - kubernetes-master-setup
+=======
+    - master_setup
+>>>>>>> Stashed changes
+
+- name: Get Kubernetes join token
+  hosts: "{{ hosts[0] }}"
+  become: true
+  vars_files:
+    - vars.yml
+  roles:
+<<<<<<< Updated upstream
+    - kubernetes-get-token
+
+<<<<<<< Updated upstream:site.yml
+- name: Setup Kubernetes worker nodes
+  hosts: "{{ worker_nodes }}"
+=======
+- name: Setup kubernetes masters
+  hosts: "{{ hosts[1:] }}"
+>>>>>>> Stashed changes:cluster.yml
+=======
+    - get_token
+
+- name: Setup kubernetes masters
+  hosts: "{{ hosts[1:] }}"
+>>>>>>> Stashed changes
+  become: true
+  vars_files:
+    - vars.yml
+  roles:
+<<<<<<< Updated upstream
+    - kubernetes-worker-setup
+=======
+    - secondary_master_setup
+>>>>>>> Stashed changes

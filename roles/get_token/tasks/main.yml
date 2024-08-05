@@ -1,0 +1,30 @@
+---
+- name: Check if join command file exists
+  ansible.builtin.stat:
+    path: /tmp/join_command.txt
+  register: join_command_file_stat
+
+- name: Create join command for control plane nodes
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: master_join_command
+  changed_when: false
+  when: not join_command_file_stat.stat.exists
+
+- name: Upload certs and get certs key
+  ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
+  register: certs_key
+  changed_when: false
+  when: not join_command_file_stat.stat.exists
+
+- name: Save join command and certs key
+  ansible.builtin.set_fact:
+    join_command: "{{ master_join_command.stdout }} --control-plane --certificate-key {{ certs_key.stdout_lines[-1] }}"
+  when: not join_command_file_stat.stat.exists
+
+- name: Write join command to file
+  ansible.builtin.copy:
+    content: "{{ join_command }}"
+    dest: /tmp/join_command.txt
+    mode: '0644'
+  when: not join_command_file_stat.stat.exists
+

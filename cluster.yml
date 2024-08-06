@@ -6,7 +6,7 @@
   roles:
     - dependencies
 
-- name:  ⁠Bootstrap kubernetes cluster
+- name: Bootstrap kubernetes cluster
   hosts: "{{ master_nodes[0] }}"
   become: true
   vars_files:
@@ -23,9 +23,10 @@
     - get_token
 
 - name: Setup kubernetes masters
-  hosts: all
+  hosts: "{{ master_nodes[1:] }}"
   become: true
   vars_files:
     - vars.yml
   roles:
     - setup_masters
+    - common_tasks

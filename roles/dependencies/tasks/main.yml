@@ -105,6 +105,7 @@
                 runtime_type = "io.containerd.runc.v2"
                 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
                   SystemdCgroup = true
+    mode: '0644'
   become: true
 
 - name: Restart and enable Containerd
@@ -113,8 +114,15 @@
     state: restarted
     enabled: true
 
+- name: Download Kubernetes GPG key
+  ansible.builtin.get_url:
+    url: "{{ k8s_url_apt_key }}"
+    dest: /tmp/kubernetes-apt-key.gpg
+    mode: '0644'
+  become: true
+
 - name: Add Kubernetes GPG key
-  ansible.builtin.shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
+  ansible.builtin.command: gpg --dearmor -o {{ k8s_gpgpath }} /tmp/kubernetes-apt-key.gpg
   args:
     creates: "{{ k8s_gpgpath }}"
   become: true

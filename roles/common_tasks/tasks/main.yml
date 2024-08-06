@@ -1,0 +1,24 @@
+---
+- name: Enable and start Kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+    state: started
+  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
+
+- name: Ensure .kube directory exists
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    mode: '0755'
+  become: true
+  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
+
+- name: Copy admin.conf to user's kube config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: true
+    mode: '0644'
+  become: true
+  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists

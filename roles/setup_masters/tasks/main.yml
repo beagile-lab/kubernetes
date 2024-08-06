@@ -5,7 +5,6 @@
   register: join_command_file
   delegate_to: k8s-master-1
 
-
 - name: Check if the node is already part of the cluster
   ansible.builtin.stat:
     path: /etc/kubernetes/kubelet.conf
@@ -16,13 +15,11 @@
     join_command: "{{ join_command_file.content | b64decode }}"
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
 
-
 - name: Delete join command file
   ansible.builtin.file:
     path: /tmp/join_command.txt
     state: absent
   delegate_to: k8s-master-1
-
 
 - name: Join cluster as control plane
   ansible.builtin.command: "{{ join_command }}"
@@ -30,13 +27,14 @@
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
 
   changed_when: false
+
 - name: Enable and start Kubelet
   ansible.builtin.systemd:
     name: kubelet
     enabled: true
     state: started
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
-  
+
 - name: Ensure .kube directory exists
   ansible.builtin.file:
     path: /root/.kube
@@ -53,15 +51,3 @@
     mode: '0644'
   become: true
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
-
-- name: Install Pod network
-  become: true
-  ansible.builtin.command:
-    cmd: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-  args:
-    chdir: /root
-  environment:
-    KUBECONFIG: /root/.kube/config
-  register: pod_network_setup_log
-  changed_when: "'configured' in pod_network_setup_log.stdout"
-

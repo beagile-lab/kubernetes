@@ -4,7 +4,6 @@
     name: kubelet
     enabled: true
     state: started
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
 
 - name: Ensure .kube directory exists
   ansible.builtin.file:
@@ -12,7 +11,6 @@
     state: directory
     mode: '0755'
   become: true
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
 
 - name: Copy admin.conf to user's kube config
   ansible.builtin.copy:
@@ -21,4 +19,3 @@
     remote_src: true
     mode: '0644'
   become: true
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists

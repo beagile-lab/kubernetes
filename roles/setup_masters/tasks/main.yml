@@ -1,32 +1,36 @@
 ---
-- name: Load join command from file
-  ansible.builtin.slurp:
-    src: /tmp/join_command.txt
-  register: join_command_file
-  delegate_to: k8s-master-1
-
 - name: Check if the node is already part of the cluster
   ansible.builtin.stat:
     path: /etc/kubernetes/kubelet.conf
   register: kubelet_conf_stat
 
+- name: Load join command from file
+  ansible.builtin.slurp:
+    src: /tmp/join_command.txt
+  register: join_command_file
+  delegate_to: k8s-master-1
+  when: not kubelet_conf_stat.stat.exists
+
 - name: Set join command
   ansible.builtin.set_fact:
     join_command: "{{ join_command_file.content | b64decode }}"
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
+  when: not kubelet_conf_stat.stat.exists
 
 - name: Debug join command
   ansible.builtin.debug:
     msg: "Join command is: {{ join_command }}"
+  when: not kubelet_conf_stat.stat.exists
 
 - name: Delete join command file
   ansible.builtin.file:
     path: /tmp/join_command.txt
     state: absent
   delegate_to: k8s-master-1
+  when: not kubelet_conf_stat.stat.exists
 
 - name: Join cluster as control plane
   ansible.builtin.command: "{{ join_command }}"
   timeout: 60
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
+  when: not kubelet_conf_stat.stat.exists
   changed_when: false
+  

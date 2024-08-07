@@ -14,6 +14,11 @@
   ansible.builtin.set_fact:
     join_command: "{{ join_command_file.content | b64decode }}"
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
+  
+- name: Debug join command
+  ansible.builtin.debug:
+    msg: "Join command is: {{ join_command }}"
+  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
 
 - name: Delete join command file
   ansible.builtin.file:
@@ -25,29 +30,4 @@
   ansible.builtin.command: "{{ join_command }}"
   timeout: 60
   when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
-
   changed_when: false
-
-- name: Enable and start Kubelet
-  ansible.builtin.systemd:
-    name: kubelet
-    enabled: true
-    state: started
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
-
-- name: Ensure .kube directory exists
-  ansible.builtin.file:
-    path: /root/.kube
-    state: directory
-    mode: '0755'
-  become: true
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists
-
-- name: Copy admin.conf to user's kube config
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: /root/.kube/config
-    remote_src: true
-    mode: '0644'
-  become: true
-  when: join_command is defined and join_command != '' and not kubelet_conf_stat.stat.exists

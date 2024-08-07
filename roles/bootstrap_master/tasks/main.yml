@@ -58,18 +58,3 @@
     KUBECONFIG: /root/.kube/config
   register: pod_network_setup_log
   changed_when: "'configured' in pod_network_setup_log.stdout"
-
-- name: Check if join command file exists
-  ansible.builtin.stat:
-    path: /tmp/join_command.txt
-  register: join_command_file_stat
-
-- name: Create join command for control plane nodes
-  ansible.builtin.command: kubeadm token create --print-join-command
-  register: master_join_command
-  changed_when: false
-  when: not join_command_file_stat.stat.exists
-
-- name: Set master_join_command
-  ansible.builtin.set_fact:
-    master_join_command: "{{ master_join_command.stdout }}"

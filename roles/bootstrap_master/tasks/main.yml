@@ -44,9 +44,10 @@
 
 - name: Copy kube-flannel.yml to master
   become: true
-  copy:
+  ansible.builtin.copy:
     src: k8s_yaml_files/kube-flannel.yml
     dest: /root/kube-flannel.yml
+    mode: '0644'
 
 - name: Install Pod network
   become: true

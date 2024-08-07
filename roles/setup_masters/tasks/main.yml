@@ -16,11 +16,6 @@
     join_command: "{{ join_command_file.content | b64decode }}"
   when: not kubelet_conf_stat.stat.exists
 
-- name: Debug join command
-  ansible.builtin.debug:
-    msg: "Join command is: {{ join_command }}"
-  when: not kubelet_conf_stat.stat.exists
-
 - name: Delete join command file
   ansible.builtin.file:
     path: /tmp/join_command.txt
@@ -33,4 +28,3 @@
   timeout: 60
   when: not kubelet_conf_stat.stat.exists
   changed_when: false
-  

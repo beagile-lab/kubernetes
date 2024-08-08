@@ -4,10 +4,6 @@ on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    outputs:
-      bootstrap_master: ${{ steps.getHosts.outputs.bootstrap_master }}
-      masters: ${{ steps.getHosts.outputs.masters }}
       
     steps:
     - name: Checkout Repository
@@ -27,24 +23,12 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
 
-    - name: Split Hosts
-      id: getHosts
-      run: |
-        HOSTS="${{ secrets.HOSTS }}"
-        IFS=';' read -r -a ADDR_ARRAY <<< "$HOSTS"
-        BOOTSTRAP_MASTER=${ADDR_ARRAY[0]}
-        MASTERS=$(IFS=';'; echo "${ADDR_ARRAY[*]:1}")
-        
-        echo "bootstrap_master=$BOOTSTRAP_MASTER" >> $GITHUB_OUTPUT
-        echo "masters=$MASTERS" >> $GITHUB_OUTPUT
-
     - name: Create .ssh directory
       run: mkdir -p ~/.ssh
         
     - name: Add SSH known_hosts
       run: |
-        ssh-keyscan -H ${{ steps.getHosts.outputs.bootstrap_master }} >> ~/.ssh/known_hosts 
-        IFS=';' read -r -a array <<< "${{ steps.getHosts.outputs.masters }}"
+        IFS=';' read -r -a array <<< "${{ secrets.HOSTS }}"
         for element in "${array[@]}"
         do
             ssh-keyscan -H $element >> ~/.ssh/known_hosts
@@ -61,6 +45,5 @@ jobs:
       run: |
         ansible-playbook --user root -i inventory/hosts.yml cluster.yml --extra-vars '{
           "ansible_ssh_private_key_file": "~/.ssh/hetzner",
-          "k8s_master_1_host": "${{ steps.getHosts.outputs.bootstrap_master }}",
-          "k8s_master_masters": "${{ steps.getHosts.outputs.masters }}"
+          "k8s_masters": "${{ secrets.HOSTS }}"
         }'

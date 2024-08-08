@@ -4,10 +4,6 @@ on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    outputs:
-      primary_master: ${{ steps.getHosts.outputs.primary_master }}
-      secondary_masters: ${{ steps.getHosts.outputs.secondary_masters }}
       
     steps:
     - name: Checkout Repository
@@ -27,27 +23,16 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
 
-    - name: Split Hosts
-      id: getHosts
-      run: |
-        HOSTS="${{ secrets.HOSTS }}"
-        PRIMARY_MASTER=$(echo $HOSTS | cut -d';' -f1)
-        SECONDARY_MASTERS=$(echo $HOSTS | cut -d';' -f2-)
-
-        echo "::set-output name=primary_master::$PRIMARY_MASTER"
-        echo "::set-output name=secondary_masters::$SECONDARY_MASTERS"
     - name: Create .ssh directory
       run: mkdir -p ~/.ssh
         
     - name: Add SSH known_hosts
       run: |
-        ssh-keyscan -H ${{ steps.getHosts.outputs.primary_master }} >> ~/.ssh/known_hosts
-        IFS=';' read -r -a array <<< "${{ steps.getHosts.outputs.secondary_masters }}"
+        IFS=';' read -r -a array <<< "${{ secrets.HOSTS }}"
         for element in "${array[@]}"
         do
             ssh-keyscan -H $element >> ~/.ssh/known_hosts
         done
-
 
     - name: Write SSH private key to file
       run: |
@@ -57,9 +42,8 @@ jobs:
     - name: Run Ansible Playbook
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
-        PRIMARY_MASTER: ${{ steps.getHosts.outputs.primary_master }}
-        SECONDARY_MASTERS: ${{ steps.getHosts.outputs.secondary_masters }}
       run: |
-        ansible-playbook --user root -i inventory/hosts.yml cluster.yml --extra-vars "
-          ansible_ssh_private_key_file=~/.ssh/hetzner
-          k8s_master_1_host=${PRIMARY_MASTER}"
+        ansible-playbook --user root -i inventory/hosts.yml cluster.yml --extra-vars '{
+          "ansible_ssh_private_key_file": "~/.ssh/hetzner",
+          "k8s_masters": "${{ secrets.HOSTS }}"
+        }'
